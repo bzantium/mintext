@@ -169,8 +169,8 @@ class MLP(nnx.Module):
     """
 
     def __init__(self, config: MinTextConfig, *, rngs: nnx.Rngs, mesh: jax.sharding.Mesh | None = None):
-        dtype = getattr(jnp, config.dtype)
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        dtype = config.jnp_dtype
+        weight_dtype = config.jnp_weight_dtype
         use_fp8 = config.use_fp8
         self._mesh = mesh
 

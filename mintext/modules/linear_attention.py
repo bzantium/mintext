@@ -212,8 +212,8 @@ class GatedDeltaRuleAttention(nnx.Module):
     """
 
     def __init__(self, config: MinTextConfig, *, rngs: nnx.Rngs):
-        self.dtype = getattr(jnp, config.dtype)
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        self.dtype = config.jnp_dtype
+        weight_dtype = config.jnp_weight_dtype
 
         hidden_size = config.hidden_size
         num_k_heads = config.linear_num_key_heads or config.num_attention_heads

@@ -89,7 +89,7 @@ class DecoderLayer(nnx.Module):
 
     def __init__(self, config: MinTextConfig, layer_idx: int, *, rngs: nnx.Rngs, mesh: jax.sharding.Mesh | None = None):
         self._mesh = mesh
-        dtype = getattr(jnp, config.dtype)
+        dtype = config.jnp_dtype
         layer_type = config.layer_types[layer_idx] if config.layer_types else "full_attention"
 
         self.use_post_ffw_norm = config.use_post_ffw_norm
@@ -189,8 +189,8 @@ class Transformer(nnx.Module):
     def __init__(self, config: MinTextConfig, *, rngs: nnx.Rngs, mesh: jax.sharding.Mesh | None = None):
         self.config = config
         self.final_logit_softcapping = config.final_logit_softcapping
-        dtype = getattr(jnp, config.dtype)
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        dtype = config.jnp_dtype
+        weight_dtype = config.jnp_weight_dtype
 
         # Compute in model dtype to match HF bfloat16 rounding (e.g. sqrt(2560) → 50.5)
         self.embedding_scale = jnp.array(config.hidden_size, dtype=dtype) ** 0.5 if config.scale_embeddings else None

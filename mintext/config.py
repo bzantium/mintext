@@ -120,6 +120,18 @@ class MinTextConfig(BaseModel):
         """Derived: total Q/K head dim for MLA (nope + rope)."""
         return self.qk_nope_head_dim + self.qk_rope_head_dim
 
+    @property
+    def jnp_dtype(self):
+        """Compute dtype as a jnp dtype object."""
+        import jax.numpy as jnp
+        return getattr(jnp, self.dtype)
+
+    @property
+    def jnp_weight_dtype(self):
+        """Weight storage dtype as a jnp dtype object."""
+        import jax.numpy as jnp
+        return getattr(jnp, self.weight_dtype)
+
     # --- Run ---
     run_name: str = "default"
     model_name: str = "test-tiny"
@@ -288,7 +300,7 @@ class MinTextConfig(BaseModel):
     # --- Performance ---
     tpu_type: str = "auto"  # TPU type for XLA flags: "auto", "v6e", "v6p", "v5e", "v5p", "v4"
     xla_flags: str = ""  # Additional LIBTPU_INIT_ARGS flags (appended to presets)
-    peak_tflops_per_device: float = 0.0  # 0 = auto-detect
+
 
     # --- Logging ---
     enable_tensorboard: bool = True

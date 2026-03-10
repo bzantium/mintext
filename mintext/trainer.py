@@ -270,7 +270,7 @@ def compute_loss(
     # jax.nn.dot_product_attention handles causal masking via is_causal=True,
     # avoiding materialization of the O(S²) mask tensor.
     if config.attn_logit_softcapping is not None:
-        mask = make_causal_mask(seq_len, dtype=getattr(jnp, config.dtype))
+        mask = make_causal_mask(seq_len, dtype=config.jnp_dtype)
     else:
         mask = None
 

@@ -121,7 +121,7 @@ class Attention(nnx.Module):
         self.num_attention_heads = config.num_attention_heads
         self.num_key_value_heads = config.num_key_value_heads
         self.head_dim = config.head_dim
-        self.dtype = getattr(jnp, config.dtype)
+        self.dtype = config.jnp_dtype
         self.use_qk_norm = use_qk_norm
         self.sliding_window = sliding_window
         self.use_custom_kernels = config.use_custom_kernels
@@ -130,7 +130,7 @@ class Attention(nnx.Module):
         self._mesh = mesh
 
         embed_dim = config.hidden_size
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        weight_dtype = config.jnp_weight_dtype
 
         # Attention scale: query_pre_attn_scalar overrides default 1/sqrt(head_dim)
         query_pre_attn_scalar = config.query_pre_attn_scalar

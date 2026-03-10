@@ -29,10 +29,10 @@ class MLAttention(nnx.Module):
         self.v_head_dim = config.v_head_dim
         self.q_lora_rank = config.q_lora_rank
         self.kv_lora_rank = config.kv_lora_rank
-        self.dtype = getattr(jnp, config.dtype)
+        self.dtype = config.jnp_dtype
 
         embed_dim = config.hidden_size
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        weight_dtype = config.jnp_weight_dtype
         qk_head_dim = config.qk_head_dim  # nope + rope
 
         # Scaling factor

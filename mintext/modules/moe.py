@@ -24,8 +24,8 @@ class MoERouter(nnx.Module):
         self.norm_topk_prob = config.norm_topk_prob
         self.routed_scaling_factor = config.routed_scaling_factor
 
-        dtype = getattr(jnp, config.dtype)
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        dtype = config.jnp_dtype
+        weight_dtype = config.jnp_weight_dtype
 
         self.gate = Linear(
             config.hidden_size, config.num_experts,
@@ -112,12 +112,12 @@ class MoEExperts(nnx.Module):
 
     def __init__(self, config: MinTextConfig, *, rngs: nnx.Rngs):
         self.num_experts = config.num_experts
-        self.dtype = getattr(jnp, config.dtype)
+        self.dtype = config.jnp_dtype
         self.use_custom_vjp = config.moe_use_custom_vjp
         self.mosaic_fusion = config.moe_mosaic_fusion_group
         self.gate_up_tiling = tuple(config.moe_gate_up_tiling) if config.moe_gate_up_tiling else None
         self.down_tiling = tuple(config.moe_down_tiling) if config.moe_down_tiling else None
-        weight_dtype = getattr(jnp, config.weight_dtype)
+        weight_dtype = config.jnp_weight_dtype
 
         init = _default_kernel_init()
 
