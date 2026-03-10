@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mintext"
+version = "0.1.0"
+description = "Minimal high-performance JAX LLM training framework"
+requires-python = ">=3.12"
+dependencies = [
+    "flax>=0.10.0",
+    "optax @ git+https://github.com/google-deepmind/optax.git",
+    "orbax-checkpoint>=0.6.0",
+    "pydantic>=2.0",
+    "omegaconf>=2.3",
+    "pyyaml>=6.0",
+    "tensorboardX>=2.6",
+    "grain>=0.2.0",
+    "array_record>=0.5.0",
+    "safetensors>=0.4.0",
+]
+
+[project.optional-dependencies]
+data = [
+    "transformers>=4.36",
+]
+gpu = [
+    "jax[cuda12]>=0.4.20",
+]
+tpu = [
+    "jax[tpu]>=0.4.20",
+]
+kernels = [
+    "tokamax>=0.0.10",
+]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+    "transformers>=4.36",
+    "torch>=2.0",
+]
+
+[project.scripts]
+mintext-train = "mintext.train:main"
+
+[tool.setuptools.packages.find]
+include = ["mintext*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore:Setting `jax_pmap_shmap_merge`:DeprecationWarning",
+]

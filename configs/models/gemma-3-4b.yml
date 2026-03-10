@@ -1,0 +1,38 @@
+# Gemma 3 4B configuration (google/gemma-3-4b-pt)
+base_config: ../base.yml
+
+model_name: gemma-3-4b
+model_type: gemma3
+num_hidden_layers: 34
+hidden_size: 2560
+num_attention_heads: 8
+num_key_value_heads: 4
+intermediate_size: 10240
+head_dim: 256
+vocab_size: 262144
+max_position_embeddings: 131072
+rms_norm_eps: 1e-6
+tie_word_embeddings: true
+hidden_activation: gelu_pytorch_tanh
+
+# Gemma3 specific
+query_pre_attn_scalar: 256
+attn_logit_softcapping: 50.0
+final_logit_softcapping: 30.0
+use_post_ffw_norm: true
+scale_embeddings: true
+sliding_window: 512
+sliding_window_pattern: 6
+
+# RoPE
+rope_type: default
+rope_theta: 1000000.0
+rope_local_theta: 10000.0
+
+# Training defaults for 4B
+per_device_batch_size: 2
+learning_rate: 3e-4
+weight_decay: 0.1
+warmup_steps_fraction: 0.01
+remat_policy: full
+scan_layers: false

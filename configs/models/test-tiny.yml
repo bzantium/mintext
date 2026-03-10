@@ -1,0 +1,13 @@
+# Tiny test model for unit testing
+base_config: ../base.yml
+
+model_name: test-tiny
+model_type: llama3
+num_hidden_layers: 2
+hidden_size: 128
+num_attention_heads: 4
+intermediate_size: 512
+vocab_size: 256
+max_position_embeddings: 128
+steps: 10
+per_device_batch_size: 2

@@ -1,0 +1,46 @@
+# Qwen3 4B benchmark config for TPU v6e-8
+# Usage: python -m mintext.train --config configs/benchmarks/qwen3-4b-v6e-8.yml
+base_config: ../base.yml
+
+# Model
+model_name: qwen3-4b
+model_type: qwen3
+num_hidden_layers: 36
+hidden_size: 2560
+num_attention_heads: 32
+num_key_value_heads: 8
+intermediate_size: 9728
+head_dim: 128
+vocab_size: 151936
+rms_norm_eps: 1e-6
+tie_word_embeddings: true
+use_qk_norm: true
+rope_theta: 1000000.0
+
+# Benchmark-tuned settings
+max_position_embeddings: 2048
+per_device_batch_size: 2
+dtype: bfloat16
+weight_dtype: float32
+
+# Performance
+remat_policy: full
+scan_layers: true
+
+# Mesh: pure FSDP on 8 chips
+ici_data_parallelism: 1
+ici_fsdp_parallelism: -1
+ici_tensor_parallelism: 1
+
+# Training
+steps: 30
+log_period: 1
+learning_rate: 3e-4
+weight_decay: 0.1
+warmup_steps_fraction: 0.0
+
+# Synthetic data for benchmarking
+dataset_type: synthetic
+enable_checkpointing: false
+enable_tensorboard: false
+enable_profiler: false

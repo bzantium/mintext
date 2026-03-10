@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Testing
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# oh-my-claudecode local state
+.omc/
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Docs (local only)
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Profiling/logs
+*.prof
+*.trace
+tensorboard/
