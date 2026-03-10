@@ -40,7 +40,7 @@ def calculate_tflops_per_device(config: MinTextConfig) -> float:
         TFLOP per device per step (float).
     """
     B = config.per_device_batch_size
-    S = config.max_position_embeddings
+    S = config.seq_length
     D = config.hidden_size
     V = config.vocab_size
     L = config.num_hidden_layers
@@ -108,6 +108,6 @@ def calculate_tokens_per_device(config: MinTextConfig) -> int:
     """Calculate tokens processed per device per step."""
     return (
         config.per_device_batch_size
-        * config.max_position_embeddings
+        * config.seq_length
         * config.gradient_accumulation_steps
     )

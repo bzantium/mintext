@@ -385,7 +385,7 @@ class TestScanForward:
             head_dim=16,
             intermediate_size=128,
             vocab_size=128,
-            max_position_embeddings=16,
+            seq_length=16,
             dtype="float32",
             weight_dtype="float32",
         )

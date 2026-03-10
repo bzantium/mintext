@@ -51,7 +51,7 @@ def _create_iterator(
         src = DocumentDataSource(
             data_path=path,
             data_type=data_type,
-            seq_len=config.max_position_embeddings,
+            seq_len=config.seq_length,
             seed=config.seed,
             num_epochs=config.num_data_epochs,
             split=split,

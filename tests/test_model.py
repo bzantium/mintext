@@ -26,7 +26,7 @@ def config():
         head_dim=16,
         intermediate_size=128,
         vocab_size=128,
-        max_position_embeddings=32,
+        seq_length=32,
         dtype="float32",
         weight_dtype="float32",
     )
@@ -111,7 +111,7 @@ class TestRoPEVariants:
         """YaRN produces blended frequencies between extrapolation and interpolation."""
         cfg = MinTextConfig(
             rope_type="yarn", rope_scaling_factor=4.0,
-            rope_original_max_position_embeddings=4096,
+            rope_original_seq_length=4096,
             rope_yarn_beta_fast=32.0, rope_yarn_beta_slow=1.0,
             rope_yarn_mscale=1.0, rope_yarn_mscale_all_dim=0.0,
             dtype="float32", weight_dtype="float32",
@@ -126,7 +126,7 @@ class TestRoPEVariants:
         import math
         cfg = MinTextConfig(
             rope_type="yarn", rope_scaling_factor=4.0,
-            rope_original_max_position_embeddings=4096,
+            rope_original_seq_length=4096,
             rope_yarn_mscale=1.0, rope_yarn_mscale_all_dim=0.0,
             dtype="float32", weight_dtype="float32",
         )
@@ -139,7 +139,7 @@ class TestRoPEVariants:
         cfg_default = MinTextConfig(rope_type="default", dtype="float32", weight_dtype="float32")
         cfg_llama3 = MinTextConfig(
             rope_type="llama3", rope_scaling_factor=8.0,
-            rope_original_max_position_embeddings=8192,
+            rope_original_seq_length=8192,
             rope_llama3_low_freq_factor=1.0, rope_llama3_high_freq_factor=4.0,
             dtype="float32", weight_dtype="float32",
         )
@@ -175,9 +175,9 @@ class TestRoPEVariants:
         for rt in ["default", "linear", "yarn", "llama3"]:
             cfg = MinTextConfig(
                 num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-                intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+                intermediate_size=128, vocab_size=128, seq_length=32,
                 rope_type=rt, rope_scaling_factor=2.0,
-                rope_original_max_position_embeddings=32,
+                rope_original_seq_length=32,
                 dtype="float32", weight_dtype="float32",
             )
             model = Transformer(cfg, rngs=rngs)
@@ -291,7 +291,7 @@ class TestTransformer:
     def test_tie_word_embeddings(self, rngs):
         cfg = MinTextConfig(
             num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             tie_word_embeddings=True, dtype="float32", weight_dtype="float32",
         )
         model = Transformer(cfg, rngs=rngs)
@@ -370,7 +370,7 @@ class TestQwen3Attention:
     def test_qwen3_full_model(self, rngs):
         cfg = MinTextConfig(
             model_type="qwen3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             use_qk_norm=True, use_sliding_window=True, sliding_window=8, max_window_layers=1,
             dtype="float32", weight_dtype="float32",
         )
@@ -392,7 +392,7 @@ class TestMLAttention:
             model_type="deepseek_v3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4,
             attention_type="mla", q_lora_rank=32, kv_lora_rank=32,
             qk_nope_head_dim=8, qk_rope_head_dim=4, v_head_dim=8,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             dtype="float32", weight_dtype="float32",
         )
 
@@ -417,7 +417,7 @@ class TestMLAttention:
             model_type="deepseek_v3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4,
             attention_type="mla", q_lora_rank=0, kv_lora_rank=32,
             qk_nope_head_dim=8, qk_rope_head_dim=4, v_head_dim=8,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             dtype="float32", weight_dtype="float32",
         )
         mla = MLAttention(cfg, layer_idx=0, rngs=rngs)
@@ -540,7 +540,7 @@ class TestGatedDeltaRuleAttention:
     def linear_config(self):
         return MinTextConfig(
             model_type="qwen3_next", num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             linear_key_head_dim=8, linear_value_head_dim=8,
             linear_num_key_heads=4, linear_num_value_heads=4,
             linear_conv_kernel_dim=4,
@@ -568,7 +568,7 @@ class TestQwen3NextHybrid:
     def hybrid_config(self):
         return MinTextConfig(
             model_type="qwen3_next", num_hidden_layers=8, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             use_qk_norm=True, full_attention_interval=4,
             partial_rotary_factor=1.0,
             linear_key_head_dim=8, linear_value_head_dim=8,
@@ -608,7 +608,7 @@ class TestDeepSeekV3Model:
     def ds_config(self):
         return MinTextConfig(
             model_type="deepseek_v3", num_hidden_layers=4, hidden_size=64, num_attention_heads=4,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             attention_type="mla", q_lora_rank=32, kv_lora_rank=32,
             qk_nope_head_dim=8, qk_rope_head_dim=4, v_head_dim=8,
             num_experts=4, num_experts_per_tok=2, moe_intermediate_size=64,
@@ -651,7 +651,7 @@ class TestMultiModelTransformer:
     def test_llama(self, rngs):
         cfg = MinTextConfig(
             model_type="llama3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             dtype="float32", weight_dtype="float32",
         )
         model = Transformer(cfg, rngs=rngs)
@@ -664,7 +664,7 @@ class TestMultiModelTransformer:
     def test_qwen3(self, rngs):
         cfg = MinTextConfig(
             model_type="qwen3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             use_qk_norm=True, dtype="float32", weight_dtype="float32",
         )
         model = Transformer(cfg, rngs=rngs)
@@ -677,7 +677,7 @@ class TestMultiModelTransformer:
     def test_deepseek_v3(self, rngs):
         cfg = MinTextConfig(
             model_type="deepseek_v3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             attention_type="mla", q_lora_rank=32, kv_lora_rank=32,
             qk_nope_head_dim=8, qk_rope_head_dim=4, v_head_dim=8,
             num_experts=4, num_experts_per_tok=2, moe_intermediate_size=64,
@@ -695,7 +695,7 @@ class TestMultiModelTransformer:
     def test_qwen3_next(self, rngs):
         cfg = MinTextConfig(
             model_type="qwen3_next", num_hidden_layers=4, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             use_qk_norm=True, full_attention_interval=4,
             linear_key_head_dim=8, linear_value_head_dim=8,
             linear_num_key_heads=4, linear_num_value_heads=4,
@@ -713,7 +713,7 @@ class TestMultiModelTransformer:
         cfg = MinTextConfig(
             model_type="gemma3", num_hidden_layers=6, hidden_size=64, num_attention_heads=4,
             num_key_value_heads=2, head_dim=16, intermediate_size=128, vocab_size=128,
-            max_position_embeddings=32, hidden_activation="gelu",
+            seq_length=32, hidden_activation="gelu",
             use_qk_norm=True, sliding_window=16, sliding_window_pattern=6,
             rope_theta=1_000_000.0, rope_local_theta=10_000.0,
             query_pre_attn_scalar=16.0, use_post_ffw_norm=True,
@@ -766,7 +766,7 @@ class TestGemma3Attention:
         return MinTextConfig(
             model_type="gemma3", num_hidden_layers=6, hidden_size=64, num_attention_heads=4,
             num_key_value_heads=2, head_dim=16, intermediate_size=128, vocab_size=128,
-            max_position_embeddings=32, hidden_activation="gelu",
+            seq_length=32, hidden_activation="gelu",
             use_qk_norm=True, sliding_window=16, sliding_window_pattern=6,
             rope_theta=1_000_000.0, rope_local_theta=10_000.0,
             query_pre_attn_scalar=16.0, attn_logit_softcapping=50.0,
@@ -836,7 +836,7 @@ class TestGemma3Model:
         return MinTextConfig(
             model_type="gemma3", num_hidden_layers=6, hidden_size=64, num_attention_heads=4,
             num_key_value_heads=2, head_dim=16, intermediate_size=128, vocab_size=128,
-            max_position_embeddings=32, hidden_activation="gelu",
+            seq_length=32, hidden_activation="gelu",
             use_qk_norm=True, sliding_window=16, sliding_window_pattern=6,
             rope_theta=1_000_000.0, rope_local_theta=10_000.0,
             query_pre_attn_scalar=16.0, use_post_ffw_norm=True,
@@ -865,7 +865,7 @@ class TestGemma3Model:
         cfg = MinTextConfig(
             model_type="gemma3", num_hidden_layers=2, hidden_size=64, num_attention_heads=4,
             num_key_value_heads=2, head_dim=16, intermediate_size=128, vocab_size=128,
-            max_position_embeddings=32, hidden_activation="gelu",
+            seq_length=32, hidden_activation="gelu",
             final_logit_softcapping=30.0,
             dtype="float32", weight_dtype="float32",
         )
@@ -930,7 +930,7 @@ class TestAdvancedRemat:
     def _make_model_and_inputs(self, rngs, remat_policy):
         cfg = MinTextConfig(
             num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             remat_policy=remat_policy,
             dtype="float32", weight_dtype="float32",
         )
@@ -1007,7 +1007,7 @@ class TestCustomKernels:
         """When use_custom_kernels=True but tokamax not installed, should fall back."""
         cfg = MinTextConfig(
             num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=32,
+            intermediate_size=128, vocab_size=128, seq_length=32,
             use_custom_kernels=True,
             dtype="float32", weight_dtype="float32",
         )

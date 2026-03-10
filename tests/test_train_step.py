@@ -42,7 +42,7 @@ def config():
         head_dim=16,
         intermediate_size=128,
         vocab_size=128,
-        max_position_embeddings=16,
+        seq_length=16,
         steps=10,
         learning_rate=1e-3,
         warmup_steps_fraction=0.1,
@@ -173,7 +173,7 @@ class TestZLoss:
         model, state = model_and_state
         cfg = MinTextConfig(
             num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=16, steps=10,
+            intermediate_size=128, vocab_size=128, seq_length=16, steps=10,
             dtype="float32", weight_dtype="float32", z_loss_weight=1e-4,
         )
         loss, aux = _skip_if_ad_checkpoint_broken(
@@ -290,7 +290,7 @@ class TestMuonOptimizer:
     def test_muon_training_step(self):
         config = MinTextConfig(
             num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=16, steps=10,
+            intermediate_size=128, vocab_size=128, seq_length=16, steps=10,
             learning_rate=1e-3, dtype="float32", weight_dtype="float32",
             optimizer="muon", muon_newton_schulz_steps=5,
         )
@@ -427,10 +427,10 @@ class TestChunkedCrossEntropy:
         assert jnp.allclose(full_loss, chunked_loss, atol=1e-5)
 
     def test_vocab_tiling_config_validation(self):
-        """per_device_batch_size * max_position_embeddings must be divisible by num_vocab_tiles."""
+        """per_device_batch_size * seq_length must be divisible by num_vocab_tiles."""
         # Valid: 2*64 = 128, 128 % 4 = 0
         cfg = MinTextConfig(
-            num_vocab_tiles=4, per_device_batch_size=2, max_position_embeddings=64,
+            num_vocab_tiles=4, per_device_batch_size=2, seq_length=64,
             vocab_size=256, dtype="float32", weight_dtype="float32",
         )
         assert cfg.num_vocab_tiles == 4
@@ -438,7 +438,7 @@ class TestChunkedCrossEntropy:
         # Invalid: 2*63 = 126, 126 % 4 != 0
         with pytest.raises(ValueError, match="divisible"):
             MinTextConfig(
-                num_vocab_tiles=4, per_device_batch_size=2, max_position_embeddings=63,
+                num_vocab_tiles=4, per_device_batch_size=2, seq_length=63,
                 vocab_size=256, dtype="float32", weight_dtype="float32",
             )
 
@@ -446,13 +446,13 @@ class TestChunkedCrossEntropy:
         """Vocab tiling produces equivalent loss through compute_loss."""
         cfg_full = MinTextConfig(
             num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=16, steps=10,
+            intermediate_size=128, vocab_size=128, seq_length=16, steps=10,
             per_device_batch_size=2, num_vocab_tiles=1,
             dtype="float32", weight_dtype="float32",
         )
         cfg_tiled = MinTextConfig(
             num_hidden_layers=1, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=16, steps=10,
+            intermediate_size=128, vocab_size=128, seq_length=16, steps=10,
             per_device_batch_size=2, num_vocab_tiles=4,
             dtype="float32", weight_dtype="float32",
         )

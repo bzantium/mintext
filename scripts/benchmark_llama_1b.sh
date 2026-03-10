@@ -34,7 +34,7 @@ for BS in ${BATCH_SIZES}; do
         --config "${CONFIG}" \
         steps="${STEPS}" \
         per_device_batch_size="${BS}" \
-        max_position_embeddings="${SEQ_LEN}" \
+        seq_length="${SEQ_LEN}" \
         dataset_type=synthetic \
         enable_checkpointing=false \
         enable_tensorboard=false \

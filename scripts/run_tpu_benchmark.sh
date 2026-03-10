@@ -10,7 +10,7 @@ python -m mintext.train \
   --config configs/base.yml \
   steps=20 \
   per_device_batch_size=4 \
-  max_position_embeddings=2048 \
+  seq_length=2048 \
   num_hidden_layers=2 \
   hidden_size=512 \
   num_attention_heads=8 \

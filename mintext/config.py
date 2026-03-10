@@ -147,7 +147,7 @@ class MinTextConfig(BaseModel):
     head_dim: int | None = None
     vocab_size: int = 256
     rms_norm_eps: float = 1e-5
-    max_position_embeddings: int = 128
+    seq_length: int = 128
     tie_word_embeddings: bool = False
     hidden_activation: str = "silu"
 
@@ -419,10 +419,10 @@ class MinTextConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_vocab_tiling(self) -> MinTextConfig:
         if self.num_vocab_tiles > 1:
-            total_tokens = self.per_device_batch_size * self.max_position_embeddings
+            total_tokens = self.per_device_batch_size * self.seq_length
             if total_tokens % self.num_vocab_tiles != 0:
                 raise ValueError(
-                    f"per_device_batch_size * max_position_embeddings ({total_tokens}) must be "
+                    f"per_device_batch_size * seq_length ({total_tokens}) must be "
                     f"divisible by num_vocab_tiles ({self.num_vocab_tiles})"
                 )
         return self

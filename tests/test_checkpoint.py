@@ -322,7 +322,7 @@ class TestHFConfigExport:
     def test_basic_fields(self):
         config = MinTextConfig(
             hidden_size=256, num_hidden_layers=4, num_attention_heads=8,
-            vocab_size=32000, max_position_embeddings=2048,
+            vocab_size=32000, seq_length=2048,
         )
         hf_cfg = _mintext_to_hf_config(config)
         assert hf_cfg["hidden_size"] == 256
@@ -476,7 +476,7 @@ class TestForwardValidation:
             num_attention_heads=2,
             intermediate_size=128,
             vocab_size=256,
-            max_position_embeddings=32,
+            seq_length=32,
             dtype="float32",
             weight_dtype="float32",
         )
@@ -516,7 +516,7 @@ class TestForwardValidation:
             num_attention_heads=2,
             intermediate_size=128,
             vocab_size=256,
-            max_position_embeddings=32,
+            seq_length=32,
             use_qk_norm=True,
             dtype="float32",
             weight_dtype="float32",
@@ -618,7 +618,7 @@ class TestForwardValidation:
             num_attention_heads=2,
             intermediate_size=128,
             vocab_size=256,
-            max_position_embeddings=32,
+            seq_length=32,
             dtype="float32",
             weight_dtype="float32",
         )
@@ -656,7 +656,7 @@ class TestForwardValidation:
             num_attention_heads=2,
             intermediate_size=128,
             vocab_size=256,
-            max_position_embeddings=32,
+            seq_length=32,
             dtype="float32",
             weight_dtype="float32",
         )

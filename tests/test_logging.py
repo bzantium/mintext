@@ -56,7 +56,7 @@ class TestCalculateTflops:
     def test_basic_llama(self):
         config = MinTextConfig(
             num_hidden_layers=2, hidden_size=128, num_attention_heads=4,
-            intermediate_size=512, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=512, vocab_size=256, seq_length=64,
             per_device_batch_size=2,
         )
         tflops = calculate_tflops_per_device(config)
@@ -67,18 +67,18 @@ class TestCalculateTflops:
     def test_larger_model_more_tflops(self):
         small = MinTextConfig(
             num_hidden_layers=2, hidden_size=128, num_attention_heads=4,
-            intermediate_size=512, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=512, vocab_size=256, seq_length=64,
         )
         large = MinTextConfig(
             num_hidden_layers=8, hidden_size=512, num_attention_heads=8,
-            intermediate_size=2048, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=2048, vocab_size=256, seq_length=64,
         )
         assert calculate_tflops_per_device(large) > calculate_tflops_per_device(small)
 
     def test_moe_model(self):
         config = MinTextConfig(
             num_hidden_layers=4, hidden_size=128, num_attention_heads=4, head_dim=32,
-            intermediate_size=256, vocab_size=128, max_position_embeddings=64,
+            intermediate_size=256, vocab_size=128, seq_length=64,
             num_experts=4, num_experts_per_tok=2,
             moe_intermediate_size=128, first_k_dense_replace=2,
         )
@@ -88,7 +88,7 @@ class TestCalculateTflops:
     def test_mla_model(self):
         config = MinTextConfig(
             num_hidden_layers=2, hidden_size=64, num_attention_heads=4, head_dim=16,
-            intermediate_size=128, vocab_size=128, max_position_embeddings=64,
+            intermediate_size=128, vocab_size=128, seq_length=64,
             attention_type="mla",
             q_lora_rank=32, kv_lora_rank=32,
             qk_nope_head_dim=8, qk_rope_head_dim=4, v_head_dim=8,
@@ -99,12 +99,12 @@ class TestCalculateTflops:
     def test_gradient_accumulation_scales(self):
         base = MinTextConfig(
             num_hidden_layers=2, hidden_size=128, num_attention_heads=4,
-            intermediate_size=512, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=512, vocab_size=256, seq_length=64,
             gradient_accumulation_steps=1,
         )
         ga4 = MinTextConfig(
             num_hidden_layers=2, hidden_size=128, num_attention_heads=4,
-            intermediate_size=512, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=512, vocab_size=256, seq_length=64,
             gradient_accumulation_steps=4,
         )
         assert calculate_tflops_per_device(ga4) == pytest.approx(
@@ -114,12 +114,12 @@ class TestCalculateTflops:
 
 class TestCalculateTokens:
     def test_basic(self):
-        config = MinTextConfig(per_device_batch_size=4, max_position_embeddings=128)
+        config = MinTextConfig(per_device_batch_size=4, seq_length=128)
         assert calculate_tokens_per_device(config) == 4 * 128
 
     def test_with_ga(self):
         config = MinTextConfig(
-            per_device_batch_size=4, max_position_embeddings=128,
+            per_device_batch_size=4, seq_length=128,
             gradient_accumulation_steps=2,
         )
         assert calculate_tokens_per_device(config) == 4 * 128 * 2
@@ -152,7 +152,7 @@ class TestMetricLogger:
             enable_tensorboard=True,
             tensorboard_dir=str(tmp_path / "tb"),
             num_hidden_layers=2, hidden_size=128, num_attention_heads=4,
-            intermediate_size=512, vocab_size=256, max_position_embeddings=64,
+            intermediate_size=512, vocab_size=256, seq_length=64,
         )
         ml = MetricLogger(config)
         metrics = {

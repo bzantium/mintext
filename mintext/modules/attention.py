@@ -197,17 +197,17 @@ class Attention(nnx.Module):
         ):
             try:
                 if jax.devices()[0].platform == "tpu":
-                    cache_key = (config.max_position_embeddings, config.num_attention_heads, sliding_window)
+                    cache_key = (config.seq_length, config.num_attention_heads, sliding_window)
                     if cache_key not in _SPLASH_FN_CACHE:
                         _SPLASH_FN_CACHE[cache_key] = _create_splash_fn(
-                            seq_len=config.max_position_embeddings,
+                            seq_len=config.seq_length,
                             num_heads=config.num_attention_heads,
                             sliding_window=sliding_window,
                         )
                     self._splash_key = cache_key
                     logger.info(
                         "Splash Attention enabled (seq=%d, heads=%d)",
-                        config.max_position_embeddings, config.num_attention_heads,
+                        config.seq_length, config.num_attention_heads,
                     )
             except Exception as e:
                 logger.warning("Failed to setup Splash Attention: %s", e)

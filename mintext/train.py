@@ -58,7 +58,7 @@ def _make_synthetic_batch(
     """Generate a synthetic training batch for testing."""
     data_parallelism = mesh.shape["data"]
     batch_size = config.per_device_batch_size * data_parallelism
-    seq_len = config.max_position_embeddings
+    seq_len = config.seq_length
     tokens = jax.random.randint(rng, (batch_size, seq_len), 0, config.vocab_size)
     return {
         "input_tokens": tokens,
@@ -123,7 +123,7 @@ def train(config: MinTextConfig):
             hidden_size=config.hidden_size,
             moe_intermediate_size=config.moe_intermediate_size,
             num_experts_per_tok=config.num_experts_per_tok,
-            batch_seq_tokens=config.per_device_batch_size * config.max_position_embeddings * jax.device_count(),
+            batch_seq_tokens=config.per_device_batch_size * config.seq_length * jax.device_count(),
             dtype=config.dtype,
         )
         result = autotune_moe(tune_cfg, cache_dir=config.moe_autotune_cache_dir or None)

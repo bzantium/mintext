@@ -16,7 +16,7 @@ intermediate_size: 512
 # head_dim: null -> defaults to hidden_size // num_attention_heads
 vocab_size: 256
 rms_norm_eps: 1e-5
-max_position_embeddings: 128
+seq_length: 128
 tie_word_embeddings: false
 
 # Data Types

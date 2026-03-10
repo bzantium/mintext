@@ -120,7 +120,7 @@ def compute_inv_freq(config: MinTextConfig, dim: int) -> tuple[jax.Array, float]
         (inv_freq, attention_factor) where inv_freq has shape [dim//2].
     """
     base = config.rope_theta
-    orig = config.rope_original_max_position_embeddings or config.max_position_embeddings
+    orig = config.rope_original_max_position_embeddings or config.seq_length
 
     rope_type = config.rope_type
     if rope_type == "default":
