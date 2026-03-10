@@ -111,7 +111,7 @@ def train(config: MinTextConfig):
             wait_for_checkpoint,
         )
         checkpoint_manager = create_checkpoint_manager(config)
-        state, start_step = maybe_restore_checkpoint(checkpoint_manager, state, config)
+        state, start_step = maybe_restore_checkpoint(checkpoint_manager, state, config, model=model)
         if start_step > 0:
             logger.info("Resuming from step %d", start_step)
 

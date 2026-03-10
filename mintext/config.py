@@ -294,8 +294,9 @@ class MinTextConfig(BaseModel):
     checkpoint_period: int = 1000
     checkpoint_dir: str = ""
     max_checkpoints: int = 5
-    load_parameters_from_path: str = ""
-    load_full_state_from_path: str = ""
+    load_checkpoint: str = ""  # Orbax checkpoint path (full state, or params-only with load_params_only=True)
+    load_hf_checkpoint: str = ""  # HF SafeTensors dir (params-only, resets optimizer + step)
+    load_params_only: bool = False  # With load_checkpoint: load only params, reset optimizer + step
 
     # --- Performance ---
     tpu_type: str = "auto"  # TPU type for XLA flags: "auto", "v6e", "v6p", "v5e", "v5p", "v4"
@@ -424,6 +425,14 @@ class MinTextConfig(BaseModel):
                     f"per_device_batch_size * max_position_embeddings ({total_tokens}) must be "
                     f"divisible by num_vocab_tiles ({self.num_vocab_tiles})"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_checkpoint_sources(self) -> MinTextConfig:
+        if self.load_checkpoint and self.load_hf_checkpoint:
+            raise ValueError("`load_checkpoint` and `load_hf_checkpoint` are mutually exclusive.")
+        if self.load_params_only and not self.load_checkpoint:
+            raise ValueError("`load_params_only` requires `load_checkpoint` to be set.")
         return self
 
 

@@ -104,35 +104,26 @@ def maybe_restore_checkpoint(
     manager: ocp.CheckpointManager | None,
     state: Any,
     config: MinTextConfig,
+    model: Any = None,
 ) -> tuple[Any, int]:
     """Restore from checkpoint if available, otherwise return initial state at step 0.
 
-    Also handles load_parameters_from_path (params-only restore for fine-tuning)
-    and load_full_state_from_path (full state restore from an external path).
+    Priority:
+        1. Resume from checkpoint_dir (existing training run)
+        2. load_checkpoint (external Orbax path — full state or params-only)
+        3. load_hf_checkpoint (HF SafeTensors → params, reset optimizer + step)
+        4. Start from scratch
 
     Args:
         manager: Orbax checkpoint manager (may be None if checkpointing disabled).
         state: Initial TrainState.
         config: MinText config.
+        model: NNX model instance (required for load_hf_checkpoint).
 
     Returns:
         (state, start_step) tuple.
     """
-    # 1. Try full state from explicit external path
-    if config.load_full_state_from_path:
-        ext_dir = Path(config.load_full_state_from_path)
-        if not ext_dir.exists():
-            raise FileNotFoundError(f"load_full_state_from_path not found: {ext_dir}")
-        ext_manager = ocp.CheckpointManager(directory=ext_dir, options=ocp.CheckpointManagerOptions(read_only=True))
-        ext_step = ext_manager.latest_step()
-        if ext_step is None:
-            raise FileNotFoundError(f"No checkpoints in: {ext_dir}")
-        restored = ext_manager.restore(ext_step, args=ocp.args.StandardRestore(state))
-        start_step = int(_get_step(restored))
-        logger.info("Loaded full state from %s at step %d", ext_dir, start_step)
-        return restored, start_step
-
-    # 2. Try resuming from checkpoint_dir
+    # 1. Try resuming from checkpoint_dir (takes priority — no re-import on resume)
     if manager is not None:
         latest = manager.latest_step()
         if latest is not None:
@@ -141,10 +132,41 @@ def maybe_restore_checkpoint(
             logger.info("Resumed from checkpoint at step %d", start_step)
             return restored, start_step
 
-    # 3. Try params-only load (fine-tuning: load params, reset optimizer + step)
-    if config.load_parameters_from_path:
-        state = _load_params_only(state, config.load_parameters_from_path)
-        logger.info("Loaded parameters from %s (optimizer reset, step=0)", config.load_parameters_from_path)
+    # 2. External Orbax checkpoint
+    if config.load_checkpoint:
+        ext_dir = Path(config.load_checkpoint)
+        if not ext_dir.exists():
+            raise FileNotFoundError(f"load_checkpoint path not found: {ext_dir}")
+        ext_manager = ocp.CheckpointManager(
+            directory=ext_dir, options=ocp.CheckpointManagerOptions(read_only=True)
+        )
+        ext_step = ext_manager.latest_step()
+        if ext_step is None:
+            raise FileNotFoundError(f"No checkpoints in: {ext_dir}")
+        restored = ext_manager.restore(ext_step, args=ocp.args.StandardRestore(state))
+
+        if config.load_params_only:
+            # Fine-tuning: take params, reset optimizer + step
+            state = state.replace(params=restored.params, step=0)
+            logger.info("Loaded params from %s (optimizer reset, step=0)", ext_dir)
+            return state, 0
+        else:
+            # Full state restore (params + optimizer + step)
+            start_step = int(_get_step(restored))
+            logger.info("Loaded full state from %s at step %d", ext_dir, start_step)
+            return restored, start_step
+
+    # 3. HF checkpoint import (convert HF → MinText params, reset optimizer + step)
+    if config.load_hf_checkpoint:
+        if model is None:
+            raise ValueError("model required for HF checkpoint loading")
+        from flax import nnx
+        from mintext.checkpoint.conversion import load_hf_checkpoint
+        model = load_hf_checkpoint(config.load_hf_checkpoint, config, model)
+        _graph, new_state = nnx.split(model)
+        state = state.replace(params=new_state, step=0)
+        logger.info("Loaded HF params from %s (optimizer reset, step=0)",
+                     config.load_hf_checkpoint)
         return state, 0
 
     # 4. No checkpoint found — start from scratch
@@ -163,31 +185,6 @@ def _get_step(state: Any) -> int:
     if hasattr(step, "item"):
         return int(step.item())
     return int(step)
-
-
-def _load_params_only(state: Any, params_path: str) -> Any:
-    """Load only model parameters from a checkpoint, keeping optimizer/step from state.
-
-    Loads from an Orbax checkpoint directory, extracts params, and replaces
-    them in the current state while keeping the optimizer state and step=0.
-    """
-    ext_dir = Path(params_path)
-    if not ext_dir.exists():
-        raise FileNotFoundError(f"load_parameters_from_path not found: {ext_dir}")
-
-    ext_manager = ocp.CheckpointManager(directory=ext_dir, options=ocp.CheckpointManagerOptions(read_only=True))
-    ext_step = ext_manager.latest_step()
-    if ext_step is None:
-        raise FileNotFoundError(f"No checkpoints in: {ext_dir}")
-
-    # Restore full state to get params
-    restored = ext_manager.restore(ext_step, args=ocp.args.StandardRestore(state))
-
-    # Replace params in original state, keep original optimizer state and reset step
-    if hasattr(state, "replace"):
-        return state.replace(params=restored.params, step=0)
-
-    return restored
 
 
 def wait_for_checkpoint(manager: ocp.CheckpointManager | None) -> None:

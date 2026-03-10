@@ -74,8 +74,9 @@ async_checkpointing: true
 checkpoint_period: 1000
 checkpoint_dir: ""
 max_checkpoints: 5
-load_parameters_from_path: ""
-load_full_state_from_path: ""
+load_checkpoint: ""        # Orbax checkpoint path (full state, or params-only with load_params_only)
+load_hf_checkpoint: ""     # HF SafeTensors dir (params-only, resets optimizer + step)
+load_params_only: false    # With load_checkpoint: load only params, reset optimizer + step
 
 # Logging
 enable_tensorboard: true

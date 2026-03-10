@@ -179,7 +179,7 @@ class TestMaybeRestore:
         restored, start_step = maybe_restore_checkpoint(None, state, config)
         assert start_step == 0
 
-    def test_load_full_state_from_path(self, ckpt_config, model_and_state, tmp_path):
+    def test_load_checkpoint_full_state(self, ckpt_config, model_and_state, tmp_path):
         model, state = model_and_state
 
         # Save a checkpoint to an external location
@@ -197,14 +197,94 @@ class TestMaybeRestore:
         save_checkpoint(ext_manager, 3, state, force=True)
         wait_for_checkpoint(ext_manager)
 
-        # Load from external path
-        load_config = MinTextConfig(
-            load_full_state_from_path=str(ext_dir),
+        # Load full state from external path
+        cfg = MinTextConfig(
+            load_checkpoint=str(ext_dir),
             async_checkpointing=False,
         )
-        fresh_state = create_train_state(model, load_config)
-        restored, start_step = maybe_restore_checkpoint(None, fresh_state, load_config)
+        fresh_state = create_train_state(model, cfg)
+        restored, start_step = maybe_restore_checkpoint(None, fresh_state, cfg)
         assert start_step == 3
+
+    def test_load_checkpoint_params_only(self, ckpt_config, model_and_state, tmp_path):
+        model, state = model_and_state
+
+        # Save a checkpoint to an external location
+        ext_dir = tmp_path / "external_ckpt"
+        ext_config = MinTextConfig(
+            checkpoint_dir=str(ext_dir),
+            async_checkpointing=False,
+        )
+        ext_manager = create_checkpoint_manager(ext_config)
+
+        # Step forward and save
+        for _ in range(3):
+            zero_grads = jax.tree.map(jnp.zeros_like, state.params)
+            state = state.apply_gradients(grads=zero_grads)
+        save_checkpoint(ext_manager, 3, state, force=True)
+        wait_for_checkpoint(ext_manager)
+
+        # Load params only — optimizer reset, step=0
+        cfg = MinTextConfig(
+            load_checkpoint=str(ext_dir),
+            load_params_only=True,
+            async_checkpointing=False,
+        )
+        fresh_state = create_train_state(model, cfg)
+        restored, start_step = maybe_restore_checkpoint(None, fresh_state, cfg)
+        assert start_step == 0
+
+    def test_restart_resumes_full_state(self, tmp_path):
+        """Simulate full restart: train 20 steps, save, create fresh state, resume."""
+        config = MinTextConfig(
+            checkpoint_dir=str(tmp_path / "checkpoints"),
+            checkpoint_period=20,
+            async_checkpointing=False,
+            enable_checkpointing=True,
+            steps=100,
+        )
+
+        # Phase 1: train from scratch and save at step 20
+        model = Transformer(config, rngs=nnx.Rngs(params=0))
+        state = create_train_state(model, config)
+        manager = create_checkpoint_manager(config)
+
+        # Apply non-zero gradients so params diverge from init
+        for _ in range(20):
+            ones_grads = jax.tree.map(jnp.ones_like, state.params)
+            state = state.apply_gradients(grads=ones_grads)
+
+        save_checkpoint(manager, 20, state, force=True)
+        wait_for_checkpoint(manager)
+
+        # Snapshot the trained params for comparison
+        trained_leaves = [np.asarray(l) for l in jax.tree.leaves(state.params)]
+
+        # Phase 2: simulate script restart — fresh model, fresh state, fresh manager
+        fresh_model = Transformer(config, rngs=nnx.Rngs(params=0))
+        fresh_state = create_train_state(fresh_model, config)
+        fresh_manager = create_checkpoint_manager(config)
+
+        # Sanity: fresh init params differ from trained params
+        fresh_leaves = [np.asarray(l) for l in jax.tree.leaves(fresh_state.params)]
+        any_differ = any(
+            not np.array_equal(f, t) for f, t in zip(fresh_leaves, trained_leaves)
+        )
+        assert any_differ, "Gradients should have changed params from init"
+
+        # Phase 3: resume from checkpoint_dir
+        restored, start_step = maybe_restore_checkpoint(
+            fresh_manager, fresh_state, config
+        )
+        assert start_step == 20
+
+        # Restored params must match the trained params, not fresh init
+        restored_leaves = [np.asarray(l) for l in jax.tree.leaves(restored.params)]
+        assert len(restored_leaves) == len(trained_leaves)
+        for i, (rest, trained) in enumerate(zip(restored_leaves, trained_leaves)):
+            np.testing.assert_array_equal(
+                rest, trained, err_msg=f"Param leaf {i} not restored correctly"
+            )
 
 
 # ============================================================
